@@ -1,0 +1,19 @@
+mocks:
+  - url: http://www.baidu.com/api/rest/v[0-9]$
+    method: GET
+    response:
+      code: 200
+      msg:
+        desc: "成功"
+        zh_CN: "成功"
+        zh_TW: "成功"
+        en_US: "success"
+  - url: http://www.sougou1.com/api/rest/v[0-9]$
+    method: GET
+    response:
+      code: 200
+      msg:
+        desc: "成功"
+        zh_CN: "成功"
+        zh_TW: "成功"
+        en_US: "success"
