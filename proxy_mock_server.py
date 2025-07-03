@@ -40,10 +40,13 @@ class ProxyHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         method = self.command
         mock_resp = match_mock(url, method)
         if mock_resp is not None:
+            body = json.dumps(mock_resp).encode('utf-8')
             self.send_response(mock_resp['code'])
             self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(body)))
+            self.send_header('Connection', 'close')
             self.end_headers()
-            self.wfile.write(json.dumps(mock_resp['msg']).encode('utf-8'))
+            self.wfile.write(body)
             return
 
         # 代理转发
@@ -55,9 +58,14 @@ class ProxyHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 resp = client.request(method, url, headers=headers, content=body, timeout=30)
             self.send_response(resp.status_code)
             for k, v in resp.headers.items():
-                if k.lower() == 'transfer-encoding':
+                # 跳过 hop-by-hop 头部和 Transfer-Encoding
+                if k.lower() in [
+                    'connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization',
+                    'te', 'trailers', 'upgrade', 'transfer-encoding'
+                ]:
                     continue
                 self.send_header(k, v)
+            self.send_header('Connection', 'close')
             self.end_headers()
             self.wfile.write(resp.content)
         except Exception as e:
