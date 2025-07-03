@@ -40,13 +40,14 @@ class ProxyHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         method = self.command
         mock_resp = match_mock(url, method)
         if mock_resp is not None:
-            body = json.dumps(mock_resp).encode('utf-8')
+            body = json.dumps(mock_resp['msg']).encode('utf-8')
             self.send_response(mock_resp['code'])
             self.send_header('Content-Type', 'application/json')
             self.send_header('Content-Length', str(len(body)))
             self.send_header('Connection', 'close')
             self.end_headers()
             self.wfile.write(body)
+            print(f"Mocked response for {method} {url} with status {mock_resp}")
             return
 
         # 代理转发
