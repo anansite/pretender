@@ -39,5 +39,11 @@ curl -x http://127.0.0.1:8888 http://www.baidu.com/api/rest/v3
 # 实际转发到百度
 ```
 
+
+## docker 运行
+```bash
+mkdir mockConfig && docker run -d -p 8888:8888 -v ./mockConfig:/app/config jsonstiananan/pretender-proxy:latest
+```
 ---
+
 如需自定义mock规则，编辑`mock_config.yaml`即可。 
