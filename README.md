@@ -2,6 +2,7 @@
 
 ## 功能简介
 - 作为本地HTTP代理，支持按完整URL正则mock返回，否则自动转发到目标地址。
+- 配置文件支持热加载，无需重启服务。
 
 ## 依赖安装
 ```bash
@@ -42,10 +43,10 @@ curl -x http://127.0.0.1:8888 http://www.baidu.com/api/rest/v3
 
 ## docker 运行
 ```bash
-mkdir mockConfig && docker run -d -p 8888:8888 -v ./mockConfig:/app/config jsonstiananan/pretender-proxy:latest
+mkdir mockConfig && cp pretender/config/mock_config.yaml mockConfig/ && docker run -d -p 8888:8888 -v ./mockConfig:/app/config jsonstiananan/pretender-proxy:latest
 ```
 
-## 服务配置
+## 调用服务配置
 1. bootRun方式启动的java项目可以指定jvm参数
 ```bash
     jvmArgs = [...,
