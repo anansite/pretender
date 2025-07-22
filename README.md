@@ -18,7 +18,7 @@ python3 proxy_mock_server.py
 ## 配置文件示例（pretender/config/mock_config.yaml）
 ```yaml
 mocks:
-  - url: ^http://www\.baidu\.com/api/rest/v[0-9]$
+  - url: ^http://www\.baidu\.com/api/rest/v[0-2]$
     method: GET
     response:
       code: 200
