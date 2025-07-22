@@ -1,5 +1,42 @@
 mocks:
-  - url: http://www.baidu.com/api/rest/v[0-9]$
+  - url: ^http://www\.baidu\.com/api/rest/v[0-9]$
+    method: GET
+    headers:
+      Authorization: "Bearer.*"
+    response:
+      code: 200
+      msg:
+        desc: "成功"
+        zh_CN: "成功"
+        zh_TW: "成功"
+        en_US: "success"
+  
+  # 动态数据生成示例
+  - url: ^http://www\.example\.com/api/users$
+    method: GET
+    response:
+      code: 200
+      msg:
+        id: "{{faker.uuid4}}"
+        name: "{{faker.name}}"
+        email: "{{faker.email}}"
+        phone: "{{faker.phone_number}}"
+        created_at: "{{faker.date_time_this_year}}"
+  
+  # 订单数据生成示例
+  - url: ^http://www\.example\.com/api/orders$
+    method: GET
+    response:
+      code: 200
+      msg:
+        order_id: "ORD-{{faker.random_number}}"
+        customer_name: "{{faker.name}}"
+        total_amount: "{{random.uniform}}"
+        status: "{{random.choice}}"
+        created_at: "{{faker.date_time_this_year}}"
+  
+  # 延迟测试示例
+  - url: ^http://www\.sougou1\.com/api/rest/v[0-9]$
     method: GET
     response:
       code: 200
@@ -8,12 +45,4 @@ mocks:
         zh_CN: "成功"
         zh_TW: "成功"
         en_US: "success"
-  - url: http://www.sougou1.com/api/rest/v[0-9]$
-    method: GET
-    response:
-      code: 200
-      msg:
-        desc: "成功"
-        zh_CN: "成功"
-        zh_TW: "成功"
-        en_US: "success"
+      delay: 5000  # 延迟5秒后返回
