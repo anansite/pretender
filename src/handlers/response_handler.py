@@ -13,7 +13,7 @@ class ResponseHandler:
             "error": "unauthorized",
             "message": message,
             "code": 401
-        }).encode('utf-8')
+        }, ensure_ascii=False).encode('utf-8')
         handler.send_response(401)
         handler.send_header('Content-Type', 'application/json')
         handler.send_header('Content-Length', str(len(body)))
@@ -35,7 +35,7 @@ class ResponseHandler:
                 try:
                     # 生成动态数据
                     response_data = self.data_generator.generate_data(mock_resp['msg'])
-                    body = json.dumps(response_data).encode('utf-8')
+                    body = json.dumps(response_data, ensure_ascii=False).encode('utf-8')
                     handler.send_response(mock_resp['code'])
                     handler.send_header('Content-Type', 'application/json')
                     handler.send_header('Content-Length', str(len(body)))
@@ -54,7 +54,7 @@ class ResponseHandler:
         
         # 生成动态数据
         response_data = self.data_generator.generate_data(mock_resp['msg'])
-        body = json.dumps(response_data).encode('utf-8')
+        body = json.dumps(response_data, ensure_ascii=False).encode('utf-8')
         handler.send_response(mock_resp['code'])
         handler.send_header('Content-Type', 'application/json')
         handler.send_header('Content-Length', str(len(body)))

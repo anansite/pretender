@@ -19,6 +19,7 @@ mocks:
       msg:
         id: "{{faker.uuid4}}"
         name: "{{faker.name}}"
+        first_name: "{{faker.first_name}}"
         email: "{{faker.email}}"
         phone: "{{faker.phone_number}}"
         created_at: "{{faker.date_time_this_year}}"
@@ -46,3 +47,14 @@ mocks:
         zh_TW: "成功"
         en_US: "success"
       delay: 5000  # 延迟5秒后返回
+  
+  # 中文名称测试示例
+  - url: ^http://www\.test\.com/api/chinese$
+    method: GET
+    response:
+      code: 200
+      msg:
+        chinese_name: "{{faker.name}}"
+        chinese_address: "{{faker.address}}"
+        chinese_company: "{{faker.company}}"
+        chinese_job: "{{faker.job}}"

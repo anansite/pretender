@@ -11,12 +11,22 @@ class ConfigManager:
     def load_config_if_changed(self):
         """加载配置文件，支持热更新"""
         try:
+            # 检查文件是否存在
+            if not os.path.exists(self.config_path):
+                print(f"配置文件不存在: {self.config_path}")
+                return {}
+            
             mtime = os.path.getmtime(self.config_path)
+            
+            # 只有在以下情况才重新加载：
+            # 1. 缓存为空（首次加载）
+            # 2. 文件修改时间发生变化
             if self._config_cache is None or mtime != self._config_mtime:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
                     self._config_cache = yaml.safe_load(f)
                 self._config_mtime = mtime
                 print(f"配置文件已重新加载: {self.config_path}")
+                
         except Exception as e:
             print(f"加载配置文件失败: {e}")
             self._config_cache = {}

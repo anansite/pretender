@@ -5,9 +5,16 @@ from ..core.config_manager import ConfigManager
 from ..handlers.response_handler import ResponseHandler
 
 class ProxyHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+    # 类变量，所有实例共享
+    config_manager = None
+    response_handler = None
+    
     def __init__(self, *args, **kwargs):
-        self.config_manager = ConfigManager(os.path.join(os.path.dirname(__file__), '../../config/mock_config.yaml'))
-        self.response_handler = ResponseHandler()
+        # 只在第一次初始化时创建实例
+        if ProxyHTTPRequestHandler.config_manager is None:
+            config_path = os.path.join(os.path.dirname(__file__), '../../config/mock_config.yaml')
+            ProxyHTTPRequestHandler.config_manager = ConfigManager(config_path)
+            ProxyHTTPRequestHandler.response_handler = ResponseHandler()
         super().__init__(*args, **kwargs)
     
     def do_METHOD(self):

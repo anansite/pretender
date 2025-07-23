@@ -2,7 +2,7 @@ import json
 import random
 import re
 from faker import Faker
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date, time
 
 class DataGenerator:
     def __init__(self):
@@ -35,9 +35,18 @@ class DataGenerator:
                 # 处理字符串参数（用引号包围的）
                 str_pattern = r'"([^"]*)"'
                 str_params = re.findall(str_pattern, params_str)
-                # 处理数字参数
+                
+                # 处理数字参数（使用更安全的方法排除字符串参数）
+                # 先标记字符串参数的位置，然后提取数字
+                marked_str = params_str
+                for str_param in str_params:
+                    # 使用占位符替换字符串参数，避免影响数字提取
+                    placeholder = f"__STR_{len(str_params)}__"
+                    marked_str = marked_str.replace(f'"{str_param}"', placeholder)
+                
                 num_pattern = r'\b(\d+(?:\.\d+)?)\b'
-                num_params = re.findall(num_pattern, params_str)
+                num_params = re.findall(num_pattern, marked_str)
+                
                 # 处理布尔参数
                 bool_pattern = r'\b(true|false)\b'
                 bool_params = re.findall(bool_pattern, params_str, re.IGNORECASE)
@@ -49,10 +58,16 @@ class DataGenerator:
                 try:
                     method = getattr(self.faker, method_name)
                     if params:
-                        return str(method(*params))
+                        result = method(*params)
                     else:
                         # 使用默认参数
-                        return self._get_faker_default(method, method_name)
+                        result = self._get_faker_default(method, method_name)
+                    
+                    # 确保返回的是字符串，并处理Unicode编码
+                    if isinstance(result, str):
+                        return result
+                    else:
+                        return str(result)
                 except (AttributeError, TypeError) as e:
                     return f"{{{{ERROR: {var_name} - {str(e)}}}}}"
             elif var_name.startswith('random.'):
@@ -61,6 +76,7 @@ class DataGenerator:
                     method = getattr(random, method_name)
                     if params:
                         if method_name == 'choice':
+                            # choice需要列表参数
                             return str(method(params))
                         elif method_name == 'sample' and len(params) >= 2:
                             return str(method(params[0], params[1]))
@@ -74,19 +90,69 @@ class DataGenerator:
             elif var_name.startswith('datetime.'):
                 method_name = var_name[9:]  # 去掉 'datetime.'
                 try:
-                    method = getattr(datetime, method_name)
                     if method_name in ['now', 'today', 'utcnow']:
+                        method = getattr(datetime, method_name)
                         return str(method())
+                    elif method_name == 'strptime' and params:
+                        # strptime是类方法，需要特殊处理
+                        if len(params) >= 2:
+                            # strptime(date_string, format_string)
+                            return str(datetime.strptime(params[0], params[1]))
+                        else:
+                            return f"{{{{ERROR: {method_name} - 需要两个参数}}}}"
                     elif params:
+                        method = getattr(datetime, method_name)
                         if method_name == 'strftime':
                             return str(method(*params))
-                        elif method_name == 'strptime' and len(params) >= 2:
+                        else:
                             return str(method(*params))
-                        elif method_name == 'timedelta':
-                            return str(timedelta(*params))
                     else:
                         # 使用默认参数
-                        return self._get_datetime_default(method, method_name)
+                        return self._get_datetime_default(method_name)
+                except (AttributeError, TypeError) as e:
+                    return f"{{{{ERROR: {var_name} - {str(e)}}}}}"
+            elif var_name.startswith('date.'):
+                method_name = var_name[5:]  # 去掉 'date.'
+                try:
+                    if method_name == 'today':
+                        return str(date.today())
+                    elif method_name == 'strptime' and params:
+                        # strptime是类方法，需要特殊处理
+                        if len(params) >= 2:
+                            # strptime(date_string, format_string)
+                            return str(date.strptime(params[0], params[1]))
+                        else:
+                            return f"{{{{ERROR: {method_name} - 需要两个参数}}}}"
+                    elif params:
+                        method = getattr(date, method_name)
+                        if method_name == 'strftime':
+                            return str(method(*params))
+                        else:
+                            return str(method(*params))
+                    else:
+                        return self._get_date_default(method_name)
+                except (AttributeError, TypeError) as e:
+                    return f"{{{{ERROR: {var_name} - {str(e)}}}}}"
+            elif var_name.startswith('time.'):
+                method_name = var_name[5:]  # 去掉 'time.'
+                try:
+                    if method_name == 'now':
+                        return str(time.now())
+                    elif method_name == 'strptime' and params:
+                        # strptime是类方法，需要特殊处理
+                        if len(params) >= 2:
+                            # strptime(time_string, format_string)
+                            return str(time.strptime(params[0], params[1]))
+                        else:
+                            return f"{{{{ERROR: {method_name} - 需要两个参数}}}}"
+                    elif params:
+                        method = getattr(time, method_name)
+                        if method_name == 'strftime':
+                            return str(method(*params))
+                        else:
+                            return str(method(*params))
+                    else:
+                        return self._get_time_default(method_name)
                 except (AttributeError, TypeError) as e:
                     return f"{{{{ERROR: {var_name} - {str(e)}}}}}"
             else:
@@ -98,17 +164,23 @@ class DataGenerator:
         """获取Faker方法的默认参数"""
         try:
             if method_name == 'random_number':
-                return str(method(digits=8))
+                result = method(digits=8)
             elif method_name == 'text':
-                return str(method(max_nb_chars=200))
+                result = method(max_nb_chars=200)
             elif method_name == 'sentence':
-                return str(method(nb_words=6))
+                result = method(nb_words=6)
             elif method_name == 'paragraph':
-                return str(method(nb_sentences=3))
+                result = method(nb_sentences=3)
             else:
-                return str(method())
-        except:
-            return str(method())
+                result = method()
+            
+            # 确保返回的是字符串，并正确处理Unicode
+            if isinstance(result, str):
+                return result
+            else:
+                return str(result)
+        except Exception as e:
+            return f"{{{{ERROR: {method_name} - {str(e)}}}}}"
     
     def _get_random_default(self, method, method_name):
         """获取Random方法的默认参数"""
@@ -136,19 +208,57 @@ class DataGenerator:
         except:
             return str(method())
     
-    def _get_datetime_default(self, method, method_name):
+    def _get_datetime_default(self, method_name):
         """获取Datetime方法的默认参数"""
         try:
             if method_name == 'strftime':
-                return str(method('%Y-%m-%d %H:%M:%S'))
+                return str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             elif method_name == 'strptime':
                 return f"{{{{ERROR: {method_name} - 需要两个参数}}}}"
-            elif method_name == 'timedelta':
-                return str(timedelta(days=1))
+            elif method_name == 'combine':
+                return str(datetime.combine(date.today(), time.now()))
+            elif method_name == 'fromtimestamp':
+                return str(datetime.fromtimestamp(datetime.now().timestamp()))
+            elif method_name == 'fromordinal':
+                return str(datetime.fromordinal(datetime.now().toordinal()))
+            elif method_name == 'fromisoformat':
+                return str(datetime.fromisoformat(datetime.now().isoformat()))
             else:
-                return str(method())
-        except:
-            return str(method())
+                return f"{{{{ERROR: {method_name} - 未知方法}}}}"
+        except Exception as e:
+            return f"{{{{ERROR: {method_name} - {str(e)}}}}}"
+    
+    def _get_date_default(self, method_name):
+        """获取Date方法的默认参数"""
+        try:
+            if method_name == 'strftime':
+                return str(date.today().strftime('%Y-%m-%d'))
+            elif method_name == 'strptime':
+                return f"{{{{ERROR: {method_name} - 需要两个参数}}}}"
+            elif method_name == 'fromtimestamp':
+                return str(date.fromtimestamp(datetime.now().timestamp()))
+            elif method_name == 'fromordinal':
+                return str(date.fromordinal(datetime.now().toordinal()))
+            elif method_name == 'fromisoformat':
+                return str(date.fromisoformat(date.today().isoformat()))
+            else:
+                return f"{{{{ERROR: {method_name} - 未知方法}}}}"
+        except Exception as e:
+            return f"{{{{ERROR: {method_name} - {str(e)}}}}}"
+    
+    def _get_time_default(self, method_name):
+        """获取Time方法的默认参数"""
+        try:
+            if method_name == 'strftime':
+                return str(time.now().strftime('%H:%M:%S'))
+            elif method_name == 'strptime':
+                return f"{{{{ERROR: {method_name} - 需要两个参数}}}}"
+            elif method_name == 'fromisoformat':
+                return str(time.fromisoformat(time.now().isoformat()))
+            else:
+                return f"{{{{ERROR: {method_name} - 未知方法}}}}"
+        except Exception as e:
+            return f"{{{{ERROR: {method_name} - {str(e)}}}}}"
     
     def _process_dict(self, data):
         """处理字典类型数据"""
