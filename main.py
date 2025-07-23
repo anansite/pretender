@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Pretender - 本地正向代理&Mock服务主入口
+Pretender - 本地正向代理&Mock服务主入口sh
 """
 
 import sys
@@ -8,6 +8,7 @@ import os
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 
 from src.server.proxy_server import run
 

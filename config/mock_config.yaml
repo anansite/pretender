@@ -19,7 +19,6 @@ mocks:
       msg:
         id: "{{faker.uuid4}}"
         name: "{{faker.name}}"
-        first_name: "{{faker.first_name}}"
         email: "{{faker.email}}"
         phone: "{{faker.phone_number}}"
         created_at: "{{faker.date_time_this_year}}"
