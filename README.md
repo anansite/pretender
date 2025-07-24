@@ -37,7 +37,7 @@
 #### 使用预构建镜像（最简单）
 
 ```bash
-# 1️⃣ 运行容器（使用默认配置）
+# 1️⃣ 运行容器（2个工作进程）
 docker run -d -p 8888:8888 jsonstiananan/pretender-proxy:latest
 
 # 2️⃣ 配置代理
@@ -47,13 +47,33 @@ docker run -d -p 8888:8888 jsonstiananan/pretender-proxy:latest
 curl -x http://127.0.0.1:8888 http://www.example.com/api/test
 ```
 
+### 🔥 Hypercorn部署（推荐生产环境）
+
+#### 快速启动
+
+```bash
+# 1️⃣ 安装依赖
+pip install -r requirements.txt
+
+# 2️⃣ 启动服务（使用便捷脚本）
+chmod +x start.sh
+./start.sh                 # 默认模式
+./start.sh dev             # 开发模式(热重载)  
+./start.sh prod            # 生产模式(4个进程)
+
+# 3️⃣ 或直接使用hypercorn命令
+hypercorn app:app --bind 0.0.0.0:8888
+hypercorn app:app --bind 0.0.0.0:8888 --workers 4    # 多进程
+hypercorn app:app --bind 0.0.0.0:8888 --reload       # 热重载
+```
+
 #### 挂载自定义配置
 
 ```bash
 # 1️⃣ 创建配置目录
 mkdir mockConfig && cp config/mock_config.yaml mockConfig/
 
-# 2️⃣ 运行容器
+# 2️⃣ 运行容器（挂载配置文件）
 docker run -d -p 8888:8888 -v ./mockConfig:/app/config jsonstiananan/pretender-proxy:latest
 
 # 3️⃣ 配置代理

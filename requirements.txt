@@ -1,3 +1,4 @@
 httpx>=0.24.0
 pyyaml>=6.0
-faker>=18.0.0 
+faker>=18.0.0
+hypercorn>=0.14.0 
