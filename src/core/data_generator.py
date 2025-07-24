@@ -8,6 +8,11 @@ class DataGenerator:
     def __init__(self):
         self.faker = Faker(['zh_CN', 'en_US'])
         self.faker.seed_instance(42)  # 固定种子，保证可重现
+        # 缓存编译后的正则表达式，避免重复编译
+        self._template_pattern = re.compile(r'\{\{(\w+(?:\.\w+)*)(?::([^}]+))?\}\}')
+        self._str_pattern = re.compile(r'"([^"]*)"')
+        self._num_pattern = re.compile(r'\b(\d+(?:\.\d+)?)\b')
+        self._bool_pattern = re.compile(r'\b(true|false)\b', re.IGNORECASE)
     
     def generate_data(self, template):
         """根据模板生成数据"""
@@ -22,9 +27,7 @@ class DataGenerator:
     
     def _process_template(self, template):
         """处理字符串模板"""
-        # 支持 {{faker.method:param1,param2}} 和 {{random.method:param1,param2}} 格式
-        pattern = r'\{\{(\w+(?:\.\w+)*)(?::([^}]+))?\}\}'
-        
+        # 使用缓存的编译正则表达式
         def replace_var(match):
             var_name = match.group(1)
             params_str = match.group(2) if match.group(2) else ""
@@ -33,8 +36,7 @@ class DataGenerator:
             params = []
             if params_str:
                 # 处理字符串参数（用引号包围的）
-                str_pattern = r'"([^"]*)"'
-                str_params = re.findall(str_pattern, params_str)
+                str_params = self._str_pattern.findall(params_str)
                 
                 # 处理数字参数（使用更安全的方法排除字符串参数）
                 # 先标记字符串参数的位置，然后提取数字
@@ -44,12 +46,10 @@ class DataGenerator:
                     placeholder = f"__STR_{len(str_params)}__"
                     marked_str = marked_str.replace(f'"{str_param}"', placeholder)
                 
-                num_pattern = r'\b(\d+(?:\.\d+)?)\b'
-                num_params = re.findall(num_pattern, marked_str)
+                num_params = self._num_pattern.findall(marked_str)
                 
                 # 处理布尔参数
-                bool_pattern = r'\b(true|false)\b'
-                bool_params = re.findall(bool_pattern, params_str, re.IGNORECASE)
+                bool_params = self._bool_pattern.findall(params_str)
                 
                 params = str_params + [float(x) if '.' in x else int(x) for x in num_params] + [x.lower() == 'true' for x in bool_params]
             
@@ -158,7 +158,7 @@ class DataGenerator:
             else:
                 return f"{{{{UNKNOWN: {var_name}}}}}"
         
-        return re.sub(pattern, replace_var, template)
+        return self._template_pattern.sub(replace_var, template)
     
     def _get_faker_default(self, method, method_name):
         """获取Faker方法的默认参数"""

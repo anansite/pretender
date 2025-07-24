@@ -1,11 +1,14 @@
 import json
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from ..core.data_generator import DataGenerator
 
 class ResponseHandler:
     def __init__(self):
         self.data_generator = DataGenerator()
+        # 使用线程池管理延迟响应，限制最大线程数
+        self._thread_pool = ThreadPoolExecutor(max_workers=10, thread_name_prefix="DelayResponse")
     
     def send_unauthorized_response(self, handler, message="Header validation failed"):
         """发送未授权响应"""
@@ -29,7 +32,7 @@ class ResponseHandler:
             delay_seconds = mock_resp['delay'] / 1000.0  # 转换为秒，保持毫秒精度
             print(f"Simulating delay for {mock_resp['delay']}ms ({delay_seconds:.3f}s)...")
             
-            # 异步延迟处理
+            # 使用线程池处理延迟响应
             def delayed_response():
                 time.sleep(delay_seconds)  # time.sleep支持浮点数，可以实现毫秒级精度
                 try:
@@ -46,10 +49,8 @@ class ResponseHandler:
                 except Exception as e:
                     print(f"Error sending delayed response: {e}")
             
-            # 在后台线程中执行延迟响应
-            thread = threading.Thread(target=delayed_response)
-            thread.daemon = True
-            thread.start()
+            # 使用线程池执行延迟响应，避免无限制创建线程
+            self._thread_pool.submit(delayed_response)
             return
         
         # 生成动态数据
@@ -77,4 +78,8 @@ class ResponseHandler:
         handler.send_header('Connection', 'close')
         handler.end_headers()
         handler.wfile.write(resp.content)
-        print(f"Proxied response with status {resp.status_code}") 
+        print(f"Proxied response with status {resp.status_code}")
+    
+    def shutdown(self):
+        """关闭线程池"""
+        self._thread_pool.shutdown(wait=True) 

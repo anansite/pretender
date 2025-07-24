@@ -1,15 +1,25 @@
 import yaml
 import os
 import re
+import time
 
 class ConfigManager:
     def __init__(self, config_path):
         self.config_path = config_path
         self._config_cache = None
         self._config_mtime = None
+        self._last_check_time = 0
+        self._check_interval = 1.0  # 最小检查间隔1秒，避免频繁文件系统调用
     
     def load_config_if_changed(self):
-        """加载配置文件，支持热更新"""
+        """加载配置文件，支持热更新，优化频繁检查"""
+        current_time = time.time()
+        
+        # 如果距离上次检查时间不足指定间隔，直接返回缓存
+        if (self._config_cache is not None and 
+            current_time - self._last_check_time < self._check_interval):
+            return self._config_cache
+        
         try:
             # 检查文件是否存在
             if not os.path.exists(self.config_path):
@@ -17,6 +27,7 @@ class ConfigManager:
                 return {}
             
             mtime = os.path.getmtime(self.config_path)
+            self._last_check_time = current_time
             
             # 只有在以下情况才重新加载：
             # 1. 缓存为空（首次加载）
