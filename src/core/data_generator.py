@@ -93,6 +93,12 @@ class DataGenerator:
                     if method_name in ['now', 'today', 'utcnow']:
                         method = getattr(datetime, method_name)
                         return str(method())
+                    elif method_name == 'date':
+                        # datetime.date 返回当前日期的日期部分
+                        return str(datetime.now().date())
+                    elif method_name == 'time':
+                        # datetime.time 返回当前时间的时间部分
+                        return str(datetime.now().time())
                     elif method_name == 'strptime' and params:
                         # strptime是类方法，需要特殊处理
                         if len(params) >= 2:
