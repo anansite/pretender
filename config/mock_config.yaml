@@ -57,3 +57,26 @@ mocks:
         chinese_address: "{{faker.address}}"
         chinese_company: "{{faker.company}}"
         chinese_job: "{{faker.job}}"
+
+  # ── HTTPS Mock 示例 ──────────────────────────────────
+  # 需客户端信任 certs/ca.crt 后生效
+  # curl -x http://127.0.0.1:8888 --cacert certs/ca.crt https://api.example.com/api/test
+
+  - url: ^https://api\.example\.com/api/test$
+    method: GET
+    response:
+      code: 200
+      msg:
+        message: "Hello from HTTPS Mock!"
+        timestamp: "{{datetime.now}}"
+        server: "Pretender HTTPS Mock"
+
+  - url: ^https://api\.example\.com/api/users$
+    method: GET
+    response:
+      code: 200
+      msg:
+        id: "{{faker.uuid4}}"
+        name: "{{faker.name}}"
+        email: "{{faker.email}}"
+        via: "HTTPS Mock"

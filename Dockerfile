@@ -19,8 +19,6 @@ COPY src/ ./src/
 COPY app.py ./
 COPY config/ ./config/
 
-
-
 # 设置环境变量
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
@@ -30,5 +28,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 EXPOSE 8888
 
-# 直接使用hypercorn启动，2个worker进程
-CMD ["hypercorn", "app:app", "--bind", "0.0.0.0:8888", "--workers", "2"] 
+# certs 目录会在首次启动时自动生成
+VOLUME ["/app/certs"]
+
+CMD ["python", "app.py"]
